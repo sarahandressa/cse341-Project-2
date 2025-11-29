@@ -1,15 +1,15 @@
 {
   "name": "cse341-project-2",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-  "start": "node server.js",
-  "dev": "nodemon server.js",
-  "lint": "echo \"no lint configured\"",
-  "format": "echo \"no formatter configured\"",
-  "build": "echo \"no build step\"",
-  "test": "echo \"no tests yet\""
-},
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "lint": "echo \"no lint configured\"",
+    "format": "echo \"no formatter configured\"",
+    "build": "echo \"no build step\"",
+    "test": "echo \"no tests yet\""
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sarahandressa/cse341-Project-2.git"
