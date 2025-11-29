@@ -50,13 +50,13 @@ DELETE http://localhost:3000/books/692b2d006de7f350420ba301
 ############################################################
 
 ### Get all books (Render)
-GET https://cse341-project-2-31hb.onrender.com/books
+GET https://cse341-project-2-1.onrender.com/books
 
 ### Get a book by ID (Render)
-GET https://cse341-project-2-31hb.onrender.com/books/692b2fc96de7f350420ba303
+GET hhttps://cse341-project-2-1.onrender.com/books/692b2fc96de7f350420ba303
 
 ### Create a new book (Render)
-POST https://cse341-project-2-31hb.onrender.com/books
+POST https://cse341-project-2-1.onrender.com/books
 Content-Type: application/json
 
 {
@@ -68,7 +68,7 @@ Content-Type: application/json
 
 
 ### Update a book by ID (Render)
-PUT https://SEU-APP.onrender.com/books/6692b2fc96de7f350420ba303
+PUT https://cse341-project-2-1.onrender.com/books/6692b2fc96de7f350420ba303
 Content-Type: application/json
 
 {
@@ -79,4 +79,4 @@ Content-Type: application/json
 }
 
 ### Delete a book by ID (Render)
-DELETE https://SEU-APP.onrender.com/books/6692b2fc96de7f350420ba303
+DELETE https://cse341-project-2-1.onrender.com/books/6692b2fc96de7f350420ba303
