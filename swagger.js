@@ -9,9 +9,18 @@ const options = {
       version: '1.0.0',
       description: 'API to manage books'
     },
-    servers: [{ url: 'http://localhost:3000' }]
+    servers: [
+      {
+        url: 'http://localhost:3000',
+        description: 'Local development server'
+      },
+      {
+        url: 'https://cse341-project-2-1.onrender.com',
+        description: 'Production server on Render'
+      }
+    ]
   },
-  apis: ['./routes/*.js'], 
+  apis: ['./routes/*.js'],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
