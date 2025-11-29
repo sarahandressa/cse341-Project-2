@@ -51,7 +51,10 @@ const booksController = require('../controllers/booksController');
 /* Helper to check validation */
 const checkValidation = (req, res, next) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  if (!errors.isEmpty()) {
+    console.warn('Validation errors:', JSON.stringify(errors.array(), null, 2));
+    return res.status(400).json({ errors: errors.array() });
+  }
   next();
 };
 
@@ -125,9 +128,10 @@ router.get('/:id',
  *         description: Validation error
  */
 router.post('/',
-  body('title').isString().notEmpty().withMessage('title is required'),
-  body('author').isString().notEmpty().withMessage('author is required'),
+  body('title').trim().notEmpty().withMessage('title is required'),
+  body('author').trim().notEmpty().withMessage('author is required'),
   body('pages').optional().isInt({ min: 1 }).withMessage('pages must be an integer >= 1'),
+  body('summary').optional().isString(),
   checkValidation,
   booksController.create
 );
@@ -174,9 +178,10 @@ router.post('/',
  */
 router.put('/:id',
   param('id').isMongoId().withMessage('Invalid ID'),
-  body('title').optional().isString().notEmpty(),
-  body('author').optional().isString().notEmpty(),
+  body('title').optional().trim().notEmpty(),
+  body('author').optional().trim().notEmpty(),
   body('pages').optional().isInt({ min: 1 }),
+  body('summary').optional().isString(),
   checkValidation,
   booksController.update
 );
