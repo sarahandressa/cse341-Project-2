@@ -14,16 +14,16 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-
+// Home
 app.get('/', (req, res) => res.send('Hello World - Book Club API'));
 
-
+// Routes
 app.use('/books', booksRoutes);
 
-
+// Swagger (usa swagger-output.json)
 setupSwagger(app);
 
-
+// Error Handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
@@ -31,5 +31,7 @@ const MONGO = process.env.MONGODB_URI;
 
 
 connectDB(MONGO).then(() => {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  app.listen(PORT, '0.0.0.0', () =>
+    console.log(`Server running on port ${PORT}`)
+  );
 });
