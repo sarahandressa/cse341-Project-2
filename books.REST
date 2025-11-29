@@ -1,0 +1,82 @@
+############################################################
+# 📍 LOCALHOST ROUTES
+############################################################
+
+### Get all books (local)
+GET http://localhost:3000/books
+
+### Get a book by ID (local)
+GET http://localhost:3000/books/692b2d006de7f350420ba301
+
+### Create a new book (local)
+POST http://localhost:3000/books
+Content-Type: application/json
+
+{
+  "title": "The Seven Husbands of Evelyn Hugo",
+  "author": "Taylor Jenkins Reid",
+  "pages": 398,
+  "summary": "Fiction"
+}
+
+### Create a new book (local)
+POST http://localhost:3000/books
+Content-Type: application/json
+
+{
+  "title": "Twilight",
+  "author": "Stephenie Meyer",
+  "pages": 513,
+  "summary": "Young Adult"
+}
+
+### Update a book by ID (local)
+PUT http://localhost:3000/books/692b2d006de7f350420ba301
+Content-Type: application/json
+
+{
+ "title": "Dom Casmurro",
+ "author": "Machado de Assis",
+ "pages": 165,
+ "summary": "A classic."
+}
+
+### Delete a book by ID (local)
+DELETE http://localhost:3000/books/692b2d006de7f350420ba301
+
+
+############################################################
+# 🌐 RENDER ROUTES
+############################################################
+
+### Get all books (Render)
+GET https://cse341-project-2-31hb.onrender.com/books
+
+### Get a book by ID (Render)
+GET https://cse341-project-2-31hb.onrender.com/books/692b2fc96de7f350420ba303
+
+### Create a new book (Render)
+POST https://cse341-project-2-31hb.onrender.com/books
+Content-Type: application/json
+
+{
+ "title": "Dom Casmurro",
+ "author": "Machado de Assis",
+ "pages": 160,
+ "summary": "A classic."
+}
+
+
+### Update a book by ID (Render)
+PUT https://SEU-APP.onrender.com/books/6692b2fc96de7f350420ba303
+Content-Type: application/json
+
+{
+ "title": "The Picture of Dorian Gray",
+ "author": "Oscar Wilde",
+ "pages": 258,
+ "summary": "A classic fiction."
+}
+
+### Delete a book by ID (Render)
+DELETE https://SEU-APP.onrender.com/books/6692b2fc96de7f350420ba303
