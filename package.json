@@ -30,6 +30,7 @@
     "express-validator": "^7.3.1",
     "mongoose": "^9.0.0",
     "morgan": "^1.10.1",
+    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
