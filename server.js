@@ -28,23 +28,21 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 
 // --- CORS configuration ---
- 
 const corsOptions = {
   origin: (origin, callback) => {
     
-    if (origin && (origin.includes('localhost:3000') || origin.includes('onrender.com'))) {
-      callback(null, true); 
+    if (origin && (origin.includes('localhost:3000') || origin.includes('.onrender.com'))) {
+      callback(null, true);
     } else {
-      callback(new Error('CORS policy not allowed'), false); 
+      callback(new Error('CORS policy not allowed'), false);
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
-  allowedHeaders: ['Content-Type', 'Authorization'], 
-  credentials: true, 
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
- 
 
 // --- middleware ---
 app.use(morgan('dev'));
@@ -61,7 +59,8 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, 
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      secure: process.env.NODE_ENV === 'production', 
     },
   })
 );
