@@ -30,7 +30,7 @@ const options = {
       }
     }
   },
-  apis: [path.join(__dirname, './routes/*.js')] // <- pega todas as rotas
+  apis: [path.join(__dirname, './routes/*.js')] 
 };
 
 const swaggerSpec = swaggerJSDoc(options);

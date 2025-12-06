@@ -27,16 +27,15 @@ try {
 const PORT = process.env.PORT || 3000;
 const app = express();
 
-// --- middleware ---
+// --- CORS configuration ---
 const corsOptions = {
-  origin: [
-    'http://localhost:3000', 
-    'https://cse341-project-2-1.onrender.com', 
-  ],
-  credentials: true,  
+  origin: ['http://localhost:3000', 'https://cse341-project-2-1.onrender.com'],
+  credentials: true, 
 };
 
-app.use(cors(corsOptions));
+app.use(cors(corsOptions)); 
+
+// --- middleware ---
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -51,9 +50,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, 
-      secure: process.env.NODE_ENV === 'production', 
-      httpOnly: true, 
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
   })
 );
