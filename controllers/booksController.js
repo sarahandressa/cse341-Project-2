@@ -1,50 +1,49 @@
 const Book = require('../models/Book');
 
-exports.getAll = async (req, res, next) => {
+exports.getAllBooks = async (req, res) => {
   try {
-    const books = await Book.find().sort({ createdAt: -1 });
+    const books = await Book.find();
     res.json(books);
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
-exports.getById = async (req, res, next) => {
+exports.getBookById = async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);
     if (!book) return res.status(404).json({ error: 'Book not found' });
     res.json(book);
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
-exports.create = async (req, res, next) => {
+exports.createBook = async (req, res) => {
   try {
-    const newBook = new Book(req.body);
-    const saved = await newBook.save();
-    res.status(201).json(saved);
-  } catch (err) {
-    next(err);
+    await Book.create(req.body);
+    res.status(201).json({ message: 'Book created successfully!' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };
 
-exports.update = async (req, res, next) => {
+exports.updateBook = async (req, res) => {
   try {
-    const updated = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const updated = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updated) return res.status(404).json({ error: 'Book not found' });
     res.json(updated);
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };
 
-exports.remove = async (req, res, next) => {
+exports.deleteBook = async (req, res) => {
   try {
-    const removed = await Book.findByIdAndDelete(req.params.id);
-    if (!removed) return res.status(404).json({ error: 'Book not found' });
-    res.json({ message: 'Book deleted' });
-  } catch (err) {
-    next(err);
+    const deleted = await Book.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Book not found' });
+    res.json({ message: 'Deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };

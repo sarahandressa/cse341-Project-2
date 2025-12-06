@@ -1,0 +1,85 @@
+@local = http://localhost:3000
+@render = https://cse341-project-2-1.onrender.com
+
+############################################################
+# 📍 LOCALHOST ROUTES — CLUBS
+############################################################
+
+### Get all clubs (local)
+GET {{local}}/clubs
+
+### Get a club by ID (local)
+GET {{local}}/clubs/id
+
+### Create a new club (local) — requires login (session cookie)
+POST {{local}}/clubs
+Content-Type: application/json
+
+{
+  "name": "Midnight Club",
+  "description": "Monthly readings with a focus on thriller and horror.",
+  "genre": "Horror",
+  "createdAt": "2025-01-15",
+  "schedule": "Monthly",
+  "membersLimit": 20,
+  "isActive": true
+}
+
+### Update a club by ID (local) — requires login (session cookie)
+PUT {{local}}/clubs/id
+Content-Type: application/json
+
+{
+  "name": "Modern Classics Club",
+  "description": "Focused on contemporary classics and award-winning books.",
+  "genre": "Literary Fiction",
+  "createdAt": "2024-09-10",
+  "schedule": "Bi-weekly",
+  "membersLimit": 30,
+  "isActive": true
+}
+
+### Delete a club by ID (local) — requires login (session cookie)
+DELETE {{local}}/clubs/id
+
+
+############################################################
+# 🌐 RENDER ROUTES — CLUBS
+############################################################
+
+### Get all clubs (Render)
+GET {{render}}/clubs
+
+### Get a club by ID (Render)
+GET {{render}}/clubs/id
+
+### Create a new club (Render) — requires login (session cookie)
+POST {{render}}/clubs
+Content-Type: application/json
+
+{
+  "name": "Cozy Reads Club",
+  "description": "A group dedicated to cozy mysteries and heartwarming stories.",
+  "genre": "Cozy Mystery",
+  "createdAt": "2025-02-01",
+  "schedule": "Monthly",
+  "membersLimit": 15,
+  "isActive": true
+}
+
+### Update a club by ID (Render) — requires login (session cookie)
+PUT {{render}}/clubs/id
+Content-Type: application/json
+
+{
+  "name": "Sci-Fi Legends Club",
+  "description": "Exploring the most iconic sci-fi authors and books.",
+  "genre": "Science Fiction",
+  "createdAt": "2025-01-01",
+  "schedule": "Weekly",
+  "membersLimit": 25,
+  "isActive": true
+}
+
+### Delete a club by ID (Render)
+DELETE {{render}}/clubs/id

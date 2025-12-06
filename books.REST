@@ -1,48 +1,66 @@
+@local = http://localhost:3000
+@render = https://cse341-project-2-1.onrender.com
+
 ############################################################
 # 📍 LOCALHOST ROUTES
 ############################################################
 
 ### Get all books (local)
-GET http://localhost:3000/books
+GET {{local}}/books
 
 ### Get a book by ID (local)
-GET http://localhost:3000/books/692b2d006de7f350420ba301
+GET {{local}}/books/id
 
-### Create a new book (local)
-POST http://localhost:3000/books
+### Create a new book (local) - requires login (session cookie)
+POST {{local}}/books
 Content-Type: application/json
 
 {
   "title": "The Seven Husbands of Evelyn Hugo",
   "author": "Taylor Jenkins Reid",
   "pages": 398,
-  "summary": "Fiction"
+  "summary": "Fiction",
+  "publisher": "Example Publisher",
+  "genre": "Fiction",
+  "language": "English",
+  "publishedMonth": "March",
+  "publishedYear": 2017
 }
 
-### Create a new book (local)
-POST http://localhost:3000/books
+### Create a second book (local) - requires login (session cookie)
+POST {{local}}/books
 Content-Type: application/json
 
 {
   "title": "Twilight",
   "author": "Stephenie Meyer",
   "pages": 513,
-  "summary": "Young Adult"
+  "summary": "Young Adult",
+  "publisher": "Little, Brown",
+  "genre": "YA",
+  "language": "English",
+  "publishedMonth": "October",
+  "publishedYear": 2005
 }
 
-### Update a book by ID (local)
-PUT http://localhost:3000/books/692b2d006de7f350420ba301
+### Update a book by ID (local) - requires login (session cookie)
+PUT {{local}}/books/id
 Content-Type: application/json
 
 {
- "title": "Dom Casmurro",
- "author": "Machado de Assis",
- "pages": 165,
- "summary": "A classic."
+  "title": "The Shining",
+  "author": "Stephen King",
+  "pages": 447,
+  "summary": "A haunted hotel and a deteriorating mind...",
+  "publisher": "Doubleday",
+  "genre": "Horror",
+  "language": "English",
+  "publishedMonth": "January",
+  "publishedYear": 1977
 }
 
-### Delete a book by ID (local)
-DELETE http://localhost:3000/books/692b2d006de7f350420ba301
+### Delete a book by ID (local) - requires login (session cookie)
+DELETE {{local}}/books/id
 
 
 ############################################################
@@ -50,33 +68,42 @@ DELETE http://localhost:3000/books/692b2d006de7f350420ba301
 ############################################################
 
 ### Get all books (Render)
-GET https://cse341-project-2-1.onrender.com/books
+GET {{render}}/books
 
 ### Get a book by ID (Render)
-GET hhttps://cse341-project-2-1.onrender.com/books/692b2fc96de7f350420ba303
+GET {{render}}/books/id
 
-### Create a new book (Render)
-POST https://cse341-project-2-1.onrender.com/books
+### Create a new book (Render) - requires login (session cookie)
+POST {{render}}/books
 Content-Type: application/json
 
 {
- "title": "Dom Casmurro",
- "author": "Machado de Assis",
- "pages": 160,
- "summary": "A classic."
+  "title": "Dom Casmurro",
+  "author": "Machado de Assis",
+  "pages": 160,
+  "summary": "A classic.",
+  "publisher": "Example Publisher",
+  "genre": "Classic",
+  "language": "Portuguese",
+  "publishedMonth": "June",
+  "publishedYear": 1899
 }
 
-
-### Update a book by ID (Render)
-PUT https://cse341-project-2-1.onrender.com/books/6692b2fc96de7f350420ba303
+### Update a book by ID (Render) - requires login (session cookie)
+PUT {{render}}/books/id
 Content-Type: application/json
 
 {
- "title": "The Picture of Dorian Gray",
- "author": "Oscar Wilde",
- "pages": 258,
- "summary": "A classic fiction."
+  "title": "The Picture of Dorian Gray",
+  "author": "Oscar Wilde",
+  "pages": 258,
+  "summary": "A classic fiction.",
+  "publisher": "Ward, Lock & Co.",
+  "genre": "Fiction",
+  "language": "English",
+  "publishedMonth": "July",
+  "publishedYear": 1890
 }
 
-### Delete a book by ID (Render)
-DELETE https://cse341-project-2-1.onrender.com/books/6692b2fc96de7f350420ba303
+### Delete a book by ID (Render) - requires login (session cookie)
+DELETE {{render}}/books/id

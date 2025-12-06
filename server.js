@@ -1,49 +1,144 @@
 require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const passport = require('passport');
+const mongoose = require('mongoose');
+const path = require('path');
 
+// local modules
 const connectDB = require('./config/db');
+const { setupSwagger } = require('./swagger');
 const booksRoutes = require('./routes/books');
+const clubsRoutes = require('./routes/clubs');
+const authRoutes = require('./routes/auth');
 const errorHandler = require('./middleware/errorHandler');
-const setupSwagger = require('./swagger');
 
+// Passport config
+try {
+  require('./config/passport')(passport);
+} catch (e) {
+  console.warn('No passport config at ./config/passport — continue if you handle passport elsewhere.');
+}
+
+const PORT = process.env.PORT || 3000;
 const app = express();
 
-// Middleware
+// --- middleware ---
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
+// --- session ---
+const sessionSecret = process.env.SESSION_SECRET || 'change_this_secret_in_production';
+app.use(
+  session({
+    name: 'connect.sid',
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    },
+  })
+);
 
-app.use((req, res, next) => {
-  console.log('--- INCOMING REQUEST ---');
-  console.log('METHOD:', req.method);
-  console.log('URL:', req.originalUrl);
-  console.log('HEADERS:', JSON.stringify(req.headers));
-  console.log('BODY:', JSON.stringify(req.body));
-  next();
-});
+// Passport init
+app.use(passport.initialize());
+app.use(passport.session());
 
-// Home
-app.get('/', (req, res) => res.send('Hello World - Book Club API'));
-
-// Routes
-app.use('/books', booksRoutes);
-
-// Swagger
+// --- Swagger ---
 setupSwagger(app);
 
-// Error Handler
-app.use(errorHandler);
+// --- Routes ---
+app.use('/books', booksRoutes);
+app.use('/clubs', clubsRoutes);
+app.use('/', authRoutes);
 
-// Config
-const PORT = process.env.PORT || 3000;
-const MONGO = process.env.MONGODB_URI;
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-// Connect MongoDB + Start server
-connectDB(MONGO).then(() => {
-  app.listen(PORT, '0.0.0.0', () =>
-    console.log(`Server running on port ${PORT}`)
-  );
+// --- 404 handler ---
+app.use((req, res, next) => {
+  res.status(404).json({ error: 'Not Found', path: req.originalUrl });
 });
+
+// --- Error handler ---
+if (typeof errorHandler === 'function') {
+  app.use(errorHandler);
+} else {
+  app.use((err, req, res, next) => {
+    console.error(err);
+    if (res.headersSent) return next(err);
+    const status = err.status || 500;
+    res.status(status).json({
+      error: 'An error occurred on the server',
+      message: err.message,
+      stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
+    });
+  });
+}
+
+// --- list routes for debug ---
+function listRoutes(app) {
+  const routes = [];
+  if (!app._router) return;
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      routes.push(middleware.route);
+    } else if (middleware.name === 'router' && middleware.handle && middleware.handle.stack) {
+      middleware.handle.stack.forEach((handler) => {
+        const route = handler.route;
+        if (route) routes.push(route);
+      });
+    }
+  });
+
+  console.log('Registered routes:');
+  routes.forEach((r) => {
+    const methods = Object.keys(r.methods).map((m) => m.toUpperCase()).join(',');
+    console.log(`${methods} ${r.path}`);
+  });
+}
+
+// --- Connect to DB and start server ---
+(async () => {
+  try {
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+    if (!mongoUri) {
+      console.error('ERROR: MONGODB_URI (or MONGO_URI) is not set. Please set it in your environment or .env and restart the server.');
+      process.exit(1);
+    }
+
+    await connectDB(mongoUri);
+
+    const dbName = (mongoose.connection && mongoose.connection.db && mongoose.connection.db.databaseName) || 'unknown';
+    console.log('MongoDB connected to (from server):', dbName);
+
+    const t = mongoUri.length > 80 ? mongoUri.slice(0, 80) + '...' : mongoUri;
+    console.log('MONGODB_URI (truncated):', t);
+
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      listRoutes(app);
+      console.log(`Swagger UI: http://localhost:${PORT}/api-docs`);
+    });
+
+    process.on('SIGINT', () => {
+      console.log('SIGINT received — closing server');
+      server.close(() => {
+        process.exit(0);
+      });
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+})();
+

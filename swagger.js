@@ -1,5 +1,6 @@
-const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
 
 const options = {
   definition: {
@@ -7,17 +8,42 @@ const options = {
     info: {
       title: 'Book Club API',
       version: '1.0.0',
-      description: 'API to manage books'
+      description: 'API for Book Club with authentication'
     },
     servers: [
-      { url: 'https://cse341-project-2-1.onrender.com' } 
+      { url: 'http://localhost:3000', description: 'Local (development)' },
+      { url: 'https://cse341-project-2-1.onrender.com', description: 'Render (production)' }
     ],
+    components: {
+      securitySchemes: {
+        sessionAuth: {
+          type: 'apiKey',
+          in: 'cookie',
+          name: 'connect.sid',
+          description: 'Session cookie obtained after /login (use browser to login)'
+        },
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      }
+    }
   },
-  apis: ['./routes/*.js'], 
+  apis: [path.join(__dirname, './routes/*.js')] // <- pega todas as rotas
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+const swaggerSpec = swaggerJSDoc(options);
 
-module.exports = (app) => {
+function setupSwagger(app) {
+  // Swagger UI
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-};
+
+  // Swagger JSON
+  app.get('/api-docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+  });
+}
+
+module.exports = { setupSwagger, getSwaggerSpec: () => swaggerSpec };

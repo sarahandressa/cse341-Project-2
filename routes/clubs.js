@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, param, validationResult } = require('express-validator');
 const router = express.Router();
-const booksController = require('../controllers/booksController');
+const clubsController = require('../controllers/clubsController');
 const { isAuthenticated } = require('../middleware/authenticate');
 
 /* ------------------------ VALIDATION ------------------------ */
@@ -11,10 +11,13 @@ const checkValidation = (req, res, next) => {
   next();
 };
 
-const bookValidators = [
-  body('title').trim().notEmpty().withMessage('title is required'),
-  body('author').trim().notEmpty().withMessage('author is required'),
-  body('pages').optional().isInt({ min: 1 }).withMessage('pages must be >= 1'),
+const clubValidators = [
+  body('name').trim().notEmpty().withMessage('name is required'),
+  body('description').trim().notEmpty().withMessage('description is required'),
+  body('genre').trim().notEmpty().withMessage('genre is required'),
+  body('schedule').trim().notEmpty().withMessage('schedule is required'),
+  body('membersLimit').optional().isInt({ min: 1 }).withMessage('membersLimit must be integer >= 1'),
+  body('isActive').optional().isBoolean().withMessage('isActive must be boolean'),
   checkValidation,
 ];
 
@@ -24,48 +27,47 @@ const bookValidators = [
  * @openapi
  * components:
  *   schemas:
- *     Book:
+ *     Club:
  *       type: object
  *       required:
- *         - title
- *         - author
+ *         - name
+ *         - description
+ *         - genre
+ *         - schedule
  *       properties:
  *         _id:
  *           type: string
- *         title:
+ *         name:
  *           type: string
- *         author:
- *           type: string
- *         pages:
- *           type: integer
- *         summary:
- *           type: string
- *         publisher:
+ *         description:
  *           type: string
  *         genre:
  *           type: string
- *         language:
+ *         createdAt:
  *           type: string
- *         publishedMonth:
+ *           format: date-time
+ *         schedule:
  *           type: string
- *         publishedYear:
- *           type: string
+ *         membersLimit:
+ *           type: integer
+ *         isActive:
+ *           type: boolean
  */
 
 /**
  * @openapi
  * tags:
- *   - name: "Books"
- *     description: "Book management"
+ *   - name: "Clubs"
+ *     description: "Book club management"
  */
 
 /**
  * @openapi
- * /books:
+ * /clubs:
  *   get:
- *     summary: Get all books
+ *     summary: Get all clubs
  *     tags:
- *       - "Books"
+ *       - "Clubs"
  *     responses:
  *       '200':
  *         description: OK
@@ -74,17 +76,17 @@ const bookValidators = [
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Book'
+ *                 $ref: '#/components/schemas/Club'
  */
-router.get('/', booksController.getAllBooks);
+router.get('/', clubsController.getAllClubs);
 
 /**
  * @openapi
- * /books/{id}:
+ * /clubs/{id}:
  *   get:
- *     summary: Get book by id
+ *     summary: Get a club by ID
  *     tags:
- *       - "Books"
+ *       - "Clubs"
  *     parameters:
  *       - in: path
  *         name: id
@@ -98,21 +100,21 @@ router.get('/', booksController.getAllBooks);
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Book'
+ *               $ref: '#/components/schemas/Club'
  *       '400':
  *         description: Invalid ID
  *       '404':
  *         description: Not Found
  */
-router.get('/:id', param('id').isMongoId().withMessage('Invalid ID'), checkValidation, booksController.getBookById);
+router.get('/:id', param('id').isMongoId().withMessage('Invalid ID'), checkValidation, clubsController.getClubById);
 
 /**
  * @openapi
- * /books:
+ * /clubs:
  *   post:
- *     summary: Create a new book (requires login)
+ *     summary: Create a new club (requires login)
  *     tags:
- *       - "Books"
+ *       - "Clubs"
  *     security:
  *       - sessionAuth: []
  *     requestBody:
@@ -120,23 +122,23 @@ router.get('/:id', param('id').isMongoId().withMessage('Invalid ID'), checkValid
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Book'
+ *             $ref: '#/components/schemas/Club'
  *     responses:
  *       '201':
- *         description: Book created successfully
+ *         description: Club created successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Book'
+ *               $ref: '#/components/schemas/Club'
  *       '400':
  *         description: Validation error
  *       '401':
  *         description: Unauthorized
  */
-router.post('/', isAuthenticated, bookValidators, async (req, res, next) => {
+router.post('/', isAuthenticated, clubValidators, async (req, res, next) => {
   try {
-    const newBook = await booksController.createBook(req, res);
-    res.status(201).json({ message: 'Book created successfully!', book: newBook });
+    const newClub = await clubsController.createClub(req, res);
+    res.status(201).json({ message: 'Bookclub created successfully!', club: newClub });
   } catch (err) {
     next(err);
   }
@@ -144,11 +146,11 @@ router.post('/', isAuthenticated, bookValidators, async (req, res, next) => {
 
 /**
  * @openapi
- * /books/{id}:
+ * /clubs/{id}:
  *   put:
- *     summary: Update a book by id (requires login)
+ *     summary: Update a club by ID (requires login)
  *     tags:
- *       - "Books"
+ *       - "Clubs"
  *     security:
  *       - sessionAuth: []
  *     parameters:
@@ -163,10 +165,10 @@ router.post('/', isAuthenticated, bookValidators, async (req, res, next) => {
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Book'
+ *             $ref: '#/components/schemas/Club'
  *     responses:
  *       '200':
- *         description: Book updated successfully
+ *         description: Club updated successfully
  *       '400':
  *         description: Validation error
  *       '401':
@@ -174,15 +176,15 @@ router.post('/', isAuthenticated, bookValidators, async (req, res, next) => {
  *       '404':
  *         description: Not Found
  */
-router.put('/:id', isAuthenticated, param('id').isMongoId().withMessage('Invalid ID'), bookValidators, booksController.updateBook);
+router.put('/:id', isAuthenticated, param('id').isMongoId().withMessage('Invalid ID'), clubValidators, clubsController.updateClub);
 
 /**
  * @openapi
- * /books/{id}:
+ * /clubs/{id}:
  *   delete:
- *     summary: Delete a book by id (requires login)
+ *     summary: Delete a club by ID (requires login)
  *     tags:
- *       - "Books"
+ *       - "Clubs"
  *     security:
  *       - sessionAuth: []
  *     parameters:
@@ -194,7 +196,7 @@ router.put('/:id', isAuthenticated, param('id').isMongoId().withMessage('Invalid
  *         description: MongoDB ObjectId
  *     responses:
  *       '200':
- *         description: Book deleted successfully
+ *         description: Club deleted successfully
  *       '400':
  *         description: Validation error
  *       '401':
@@ -202,6 +204,6 @@ router.put('/:id', isAuthenticated, param('id').isMongoId().withMessage('Invalid
  *       '404':
  *         description: Not Found
  */
-router.delete('/:id', isAuthenticated, param('id').isMongoId().withMessage('Invalid ID'), checkValidation, booksController.deleteBook);
+router.delete('/:id', isAuthenticated, param('id').isMongoId().withMessage('Invalid ID'), checkValidation, clubsController.deleteClub);
 
 module.exports = router;
