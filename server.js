@@ -28,36 +28,38 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 
 
+app.set('trust proxy', 1); 
+
+
 const allowedOrigins = [
-  'http://localhost:3000',
+  'http://localhost:3000',
+  'http://localhost:5173', 
 ];
 
-
 if (process.env.CLIENT_ORIGIN) {
-    allowedOrigins.push(process.env.CLIENT_ORIGIN);
+    allowedOrigins.push(process.env.CLIENT_ORIGIN);
 }
 
-
 const corsOptions = {
-  origin: (origin, callback) => {
-    
-    if (!origin) return callback(null, true); 
+  origin: (origin, callback) => {
+    
+    if (!origin) return callback(null, true); 
+
+    
+    let isAllowed = allowedOrigins.includes(origin);
 
     
-    let isAllowed = allowedOrigins.includes(origin);
+    if (!isAllowed && origin.endsWith('.onrender.com')) {
+        isAllowed = true;
+    }
 
-
-    if (!isAllowed && origin.endsWith('.onrender.com')) {
-        isAllowed = true;
-    }
-
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.error(`CORS BLOCKED: Origin ${origin} not allowed`);
-      callback(new Error('CORS policy not allowed'), false);
-    }
-  },
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.error(`CORS BLOCKED: Origin ${origin} not allowed`);
+      callback(new Error('CORS policy not allowed'), false);
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -80,7 +82,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      maxAge: 1000 * 60 * 60 * 24, 
       secure: process.env.NODE_ENV === 'production', 
     },
   })
