@@ -29,11 +29,16 @@ const app = express();
 
 // --- CORS configuration ---
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://cse341-project-2-1.onrender.com'],
+  origin: [
+    'http://localhost:3000', 
+    'https://cse341-project-2-1.onrender.com' 
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+  allowedHeaders: ['Content-Type', 'Authorization'], 
   credentials: true, 
 };
 
-app.use(cors(corsOptions)); 
+app.use(cors(corsOptions));
 
 // --- middleware ---
 app.use(morgan('dev'));
@@ -50,7 +55,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+      maxAge: 1000 * 60 * 60 * 24, 
     },
   })
 );
@@ -148,4 +153,3 @@ function listRoutes(app) {
     process.exit(1);
   }
 })();
-
