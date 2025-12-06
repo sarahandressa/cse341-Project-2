@@ -29,16 +29,20 @@ const app = express();
 
 // --- CORS configuration ---
 const corsOptions = {
-  origin: [
-    'http://localhost:3000', 
-    'https://cse341-project-2-1.onrender.com' 
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
-  allowedHeaders: ['Content-Type', 'Authorization'], 
-  credentials: true, 
+  origin: (origin, callback) => {
+    if (origin && (origin.includes('localhost:3000') || origin.includes('onrender.com'))) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy not allowed'), false); 
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 };
 
-app.use(cors(corsOptions));
+app.use(cors(corsOptions));  
+
 
 // --- middleware ---
 app.use(morgan('dev'));
