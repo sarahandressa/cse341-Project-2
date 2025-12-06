@@ -1,33 +1,14 @@
-<script>
-  
-  fetch('https://cse341-project-2-1.onrender.com/books', {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-    },
-    credentials: 'include',  
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Books:', data);
-  })
-  .catch(error => {
-    console.error('Error:', error);
-  });
-
-  
-  fetch('https://cse341-project-2-1.onrender.com/clubs', {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-    },
-    credentials: 'include',  
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Clubs:', data);
-  })
-  .catch(error => {
-    console.error('Error:', error);
-  });
-</script>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Book Club API</title>
+</head>
+<body>
+  <h1>Book Club API</h1>
+  <p>This is your API home page. Use the links below for documentation and data access:</p>
+  <p><a href="/api-docs">Open API Docs (Swagger)</a></p>
+  <p><a href="/books">/books (GET)</a></p>
+  <p><a href="/clubs">/clubs (GET)</a></p>
+</body>
+</html>
