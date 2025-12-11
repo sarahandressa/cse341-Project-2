@@ -1,7 +1,7 @@
 # swagger/paths.yaml
 
 # =======================================================================================
-#                                 AUTHENTICATION (Auth)
+#                                    AUTHENTICATION (Auth)
 # =======================================================================================
 /login:
   post:
@@ -78,7 +78,7 @@
         description: User already exists
 
 # =======================================================================================
-#                                     BOOKS
+#                                          BOOKS
 # =======================================================================================
 /books:
   get:
@@ -181,7 +181,7 @@
         description: Book not found
 
 # =======================================================================================
-#                                     CLUBS
+#                                          CLUBS
 # =======================================================================================
 /clubs:
   get:
@@ -288,7 +288,7 @@
         description: Club not found
 
 # =======================================================================================
-#                                     MEETINGS
+#                                         MEETINGS
 # =======================================================================================
 /meetings/club/{clubId}:
   get:
@@ -328,7 +328,6 @@
             required:
               - clubId    
               - agenda    
-              - organizer
               - dateTime
             properties:
               clubId:     
@@ -336,10 +335,7 @@
                 description: ID of the Club this meeting belongs to (MongoDB ObjectId).
               agenda:     
                 type: string
-                description: Topic or agenda for the meeting. (Note: Mongoose might expect 'topic')
-              organizer:
-                type: string
-                description: ID of the User organizing the meeting (MongoDB ObjectId).
+                description: Topic or agenda for the meeting. (Note: Mongoose expects 'topic')
               dateTime:
                 type: string
                 format: date-time
@@ -474,7 +470,7 @@
         description: Unauthorized
 
 # =======================================================================================
-#                                      POSTS
+#                                           POSTS
 # =======================================================================================
 /posts/club/{clubId}:
   get:
@@ -590,7 +586,7 @@
         description: Post not found
 
 # =======================================================================================
-#                                READING PROGRESS
+#                                    READING PROGRESS
 # =======================================================================================
 /progress/club/{clubId}:
   get:
@@ -680,6 +676,9 @@
               currentPage:
                 type: integer
                 description: Last page number read
+              notes:
+                type: string
+                description: Optional notes about the current reading status.
     responses:
       '201':
         description: Progress recorded/updated successfully

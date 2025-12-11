@@ -12,6 +12,8 @@ exports.getProgressByKeys = async (req, res) => {
     try {
         const { userId, bookId, clubId } = req.params;
 
+        // Note: The URL parameters are already named correctly for Mongoose fields (user, book, club)
+        // because the controller receives them via req.params
         const progress = await ReadingProgress.findOne({
             user: userId,
             book: bookId,
@@ -22,7 +24,6 @@ exports.getProgressByKeys = async (req, res) => {
         .populate('club', 'name');
 
         if (!progress) {
-            // Returning 200 with null progress is often preferred for GET requests when filtering
             return res.status(200).json({ message: 'No progress found for this combination.', progress: null });
         }
 
@@ -37,7 +38,6 @@ exports.getProgressByKeys = async (req, res) => {
 
 /**
  * Gets a single reading progress entry by its ID. (GET /progress/:id)
- * FIX: Temporarily commenting out the strict authorization check to prevent 500 Server Error during testing setup.
  */
 exports.getProgressById = async (req, res) => {
     try {
@@ -47,20 +47,18 @@ exports.getProgressById = async (req, res) => {
         
         if (!progress) return res.status(404).json({ error: 'Not Found', message: 'Reading Progress entry not found' });
         
-        // 🚨 TEMPORARY FIX: COMMENTING OUT AUTHORIZATION CHECK TO AVOID 500 ERROR IN TEST SETUP
-        /*
-        // Authorization check (Ensure this route is protected by JWT/Authentication middleware)
+        // Authorization check: Ensure the user is the owner (Restored best practice)
         if (progress.user._id.toString() !== req.user.id) {
-             return res.status(403).json({ error: 'Forbidden', message: 'Access denied. You can only view your own progress.' });
+            return res.status(403).json({ error: 'Forbidden', message: 'Access denied. You can only view your own progress.' });
         }
-        */
+        
 
         res.status(200).json(progress);
     } catch (error) {
         if (error.kind === 'ObjectId') {
-             return res.status(400).json({ error: 'Bad Request', message: 'Invalid ID format.' });
+            return res.status(400).json({ error: 'Bad Request', message: 'Invalid ID format.' });
         }
-        console.error("Error in getProgressById:", error); // Log the error for better diagnosis
+        console.error("Error in getProgressById:", error);
         res.status(500).json({ error: 'Server Error', message: 'Could not retrieve reading progress entry.' });
     }
 };
@@ -72,9 +70,11 @@ exports.getAllProgressByClub = async (req, res) => {
     try {
         const { clubId } = req.params;
 
+        // Mongoose uses 'club' field to filter by the clubId from the URL
         const progressList = await ReadingProgress.find({ club: clubId })
             .populate('user', 'username displayName')
             .populate('book', 'title author')
+            .populate('club', 'name')
             .sort({ percentage: -1 }); 
 
         res.status(200).json(progressList);
@@ -93,15 +93,24 @@ exports.getAllProgressByClub = async (req, res) => {
 
 /**
  * Creates a new progress entry or updates an existing one (Upsert). (POST /progress) 
- * FIX: Implements 201 (Create) vs 200 (Update) status logic.
+ * MAPPED FIX: Translates clubId -> club and bookId -> book.
  */
 exports.createOrUpdateProgress = async (req, res) => {
     try {
-        const { book, club, percentage, currentPage, notes } = req.body;
+        // --- DATA MAPPING: Renames fields to match Mongoose Schema ---
+        const { 
+            clubId: club,     // clubId from request body maps to 'club' for Mongoose
+            bookId: book,     // bookId from request body maps to 'book' for Mongoose
+            percentage, 
+            currentPage, 
+            notes 
+        } = req.body;
+        
         // ID from the authenticated user
         const user = req.user.id; 
 
         // 1. Check if the progress entry already exists
+        // The query now uses the Mongoose schema names (user, book, club)
         const query = { user, book, club };
         const existingProgress = await ReadingProgress.findOne(query);
 
@@ -117,8 +126,8 @@ exports.createOrUpdateProgress = async (req, res) => {
         };
         
         const options = { 
-            upsert: true, // Creates if it doesn't exist
-            new: true,    // Returns the modified document
+            upsert: true, 
+            new: true, 
             setDefaultsOnInsert: true, 
             runValidators: true 
         };
@@ -165,9 +174,9 @@ exports.deleteProgress = async (req, res) => {
         
         res.status(200).json({ message: 'Reading progress deleted successfully' });
     } catch (error) {
-         if (error.kind === 'ObjectId') {
-            return res.status(400).json({ error: 'Bad Request', message: 'Invalid ID format.' });
-        }
+           if (error.kind === 'ObjectId') {
+             return res.status(400).json({ error: 'Bad Request', message: 'Invalid ID format.' });
+           }
         res.status(500).json({ error: 'Server Error', message: 'Could not delete progress.' });
     }
 };

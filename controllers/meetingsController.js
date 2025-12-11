@@ -1,4 +1,3 @@
-
 const Meeting = require('../models/Meeting');
 const Club = require('../models/Club'); 
 
@@ -13,13 +12,15 @@ exports.getMeetingsByClubId = async (req, res) => {
     try {
         const { clubId } = req.params;
         
-        
+        // Note: Mongoose field is 'club', which matches the parameter name 'clubId'
+        // in the URL route, simplifying the find query here.
         const meetings = await Meeting.find({ club: clubId })
             .populate('organizer', 'username displayName') 
             .sort({ dateTime: 1 });
 
         res.json(meetings);
     } catch (error) {
+        // In a real application, you might use 'next(error)'
         res.status(500).json({ error: 'Server error: Could not retrieve meetings.' });
     }
 };
@@ -29,7 +30,7 @@ exports.getMeetingById = async (req, res) => {
     try {
         const meeting = await Meeting.findById(req.params.id)
             .populate('organizer', 'username displayName')
-            .populate('attendees', 'username displayName'); // Popula os participantes
+            .populate('attendees', 'username displayName'); 
         
         if (!meeting) return res.status(404).json({ error: 'Meeting not found' });
         res.json(meeting);
@@ -44,24 +45,36 @@ exports.getMeetingById = async (req, res) => {
 
 /**
  * Schedule a new meeting. (POST /meetings) 
+ * Maps clubId -> club and agenda -> topic from the request body.
  */
 exports.createMeeting = async (req, res) => {
     try {
-        const { club, topic, dateTime, location } = req.body;
+        // --- DATA MAPPING: Renames fields to match Mongoose Schema ---
+        const { 
+            clubId: club,     // clubId from request body maps to 'club' for Mongoose
+            agenda: topic,    // agenda from request body maps to 'topic' for Mongoose
+            dateTime, 
+            location 
+        } = req.body;
         
+        // Ensure user is authenticated and ID is available
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: 'Authentication required to schedule a meeting.' });
+        }
         
         const newMeeting = new Meeting({
-            club,
-            topic,
+            club,             // Uses the mapped 'club' value
+            topic,            // Uses the mapped 'topic' value
             dateTime,
             location,
-            organizer: req.user.id 
+            organizer: req.user.id // Takes the ID from the authenticated user
         });
 
         await newMeeting.save();
         
         res.status(201).json({ message: 'Meeting scheduled successfully!', meeting: newMeeting });
     } catch (error) {
+        // Use error.message for more specific validation failure feedback
         res.status(400).json({ error: 'Failed to schedule meeting: ' + error.message });
     }
 };
@@ -72,16 +85,32 @@ exports.createMeeting = async (req, res) => {
 
 /**
  * Updates an existing meeting by its ID. (PUT /meetings/:id) 
- * Allows updating only by the organizer.
+ * Allows updating only by the organizer. Maps fields before update.
  */
 exports.updateMeeting = async (req, res) => {
     try {
-        const updateData = req.body;
+        const reqBody = req.body;
+        const mappedUpdateData = {};
+
+        // --- DATA MAPPING: Map client names to Mongoose names ---
+        if (reqBody.clubId) {
+            mappedUpdateData.club = reqBody.clubId;
+        }
+        if (reqBody.agenda) {
+            mappedUpdateData.topic = reqBody.agenda;
+        }
         
+        // Add all other fields directly (dateTime, location, status, attendees, etc.)
+        Object.assign(mappedUpdateData, reqBody);
+
+        // Remove client-specific names if they still exist after being mapped/used
+        delete mappedUpdateData.clubId;
+        delete mappedUpdateData.agenda;
         
+        // The update query finds the document by ID AND confirms the organizer is the logged-in user
         const updatedMeeting = await Meeting.findOneAndUpdate(
             { _id: req.params.id, organizer: req.user.id }, 
-            updateData, 
+            mappedUpdateData, // Use the mapped and cleaned data
             { new: true, runValidators: true }
         );
         
@@ -108,7 +137,7 @@ exports.updateMeeting = async (req, res) => {
  */
 exports.deleteMeeting = async (req, res) => {
     try {
-        
+        // Query to find and delete only if the organizer matches the logged-in user
         const deleted = await Meeting.findOneAndDelete({ _id: req.params.id, organizer: req.user.id });
         
         if (!deleted) {
@@ -124,7 +153,7 @@ exports.deleteMeeting = async (req, res) => {
 };
 
 // ----------------------------------
-// ATTENDEE Operations (POST / PUT)
+// ATTENDEE Operations (POST / DELETE)
 // ----------------------------------
 
 /**
@@ -133,17 +162,18 @@ exports.deleteMeeting = async (req, res) => {
 exports.addAttendee = async (req, res) => {
     try {
         const meetingId = req.params.id;
-        const userId = req.user.id; // ID do usuário logado
+        // Ensure user ID is correctly accessed from the authentication middleware
+        const userId = req.user.id; 
 
-        const meeting = await Meeting.findById(meetingId);
+        // Find and update the meeting to push the user ID into the attendees array
+        const meeting = await Meeting.findByIdAndUpdate(
+            meetingId,
+            { $addToSet: { attendees: userId } }, // $addToSet prevents duplicates
+            { new: true }
+        );
+
         if (!meeting) return res.status(404).json({ error: 'Meeting not found.' });
-
-        // Adds the user ID to the 'attendees' array if it is not already there
-        if (!meeting.attendees.includes(userId)) {
-            meeting.attendees.push(userId);
-            await meeting.save();
-        }
-
+        
         res.status(200).json({ message: 'Successfully added to meeting attendees.', meeting });
     } catch (error) {
         res.status(500).json({ error: 'Server error: Could not register attendance.' });
@@ -158,7 +188,7 @@ exports.removeAttendee = async (req, res) => {
         const meetingId = req.params.id;
         const userId = req.user.id; 
 
-        
+        // Find and update the meeting to pull the user ID from the attendees array
         const meeting = await Meeting.findByIdAndUpdate(
             meetingId,
             { $pull: { attendees: userId } }, 
