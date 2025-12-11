@@ -335,7 +335,7 @@
                 description: ID of the Club this meeting belongs to (MongoDB ObjectId).
               agenda:     
                 type: string
-                description: Topic or agenda for the meeting. (Note: Mongoose expects 'topic')
+                description: Topic or agenda for the meeting. (Note Mongoose expects 'topic')
               dateTime:
                 type: string
                 format: date-time
@@ -727,6 +727,7 @@
       '403':
         description: Forbidden (User is not the owner)
       '404':
-        description: Not Found 
+        description: Not Found
+        
 
         
