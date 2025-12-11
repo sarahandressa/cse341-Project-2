@@ -4,7 +4,7 @@
 const request = require('supertest');
 const getApp = require('../server'); 
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server'); // NEW IMPORT
+const { MongoMemoryServer } = require('mongodb-memory-server'); 
 
 // Import Models 
 const User = require('../models/User'); 
@@ -34,11 +34,11 @@ beforeAll(async () => {
     app = getApp(); 
 
     // 4. REGISTER TEST USER
-    let res = await request(app).post('/auth/register').send(userA);
+    let res = await request(app).post('/register').send(userA);
     userA._id = res.body.userId;
 
     // 5. LOGIN USER and GET TOKEN
-    res = await request(app).post('/auth/login').send({ email: userA.email, password: userA.password });
+    res = await request(app).post('/login').send({ email: userA.email, password: userA.password });
     tokenA = res.body.token;
 
     // 6. SEED INITIAL DATA (Book and Club)
@@ -84,13 +84,16 @@ afterAll(async () => {
 }, 90000); // Increased Jest timeout for setup/teardown
 
 // ----------------------------------------------------
-// READING PROGRESS CRUD/Upsert Endpoints Tests (REST OF THE FILE REMAINS THE SAME)
+// READING PROGRESS CRUD/Upsert Endpoints Tests 
 // ----------------------------------------------------
 
 describe('READING PROGRESS CRUD/Upsert Endpoints', () => {
     
     // Test 1: POST /progress (Create - Upsert)
     test('POST /progress should create a new reading progress entry (201)', async () => {
+        // Ensure tokenA is defined before use 
+        if (!tokenA) throw new Error("Authentication token A is missing, setup failed.");
+        
         const newProgress = {
             book: bookId, 
             club: clubId, 
@@ -118,6 +121,8 @@ describe('READING PROGRESS CRUD/Upsert Endpoints', () => {
     });
 
     // Test 2: GET /progress/:id (Read)
+    // NOTE: This test will FAIL (500) until you fix the 'TypeError: Cannot read properties of undefined (reading 'id')' 
+    // bug in your readingProgressController.js file.
     test('GET /progress/:id should retrieve the created progress entry (200)', async () => {
         if (!progressId) throw new Error("progressId is undefined, POST test failed to capture ID.");
         

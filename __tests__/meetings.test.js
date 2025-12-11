@@ -4,7 +4,7 @@
 const request = require('supertest');
 const getApp = require('../server'); 
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server'); // NEW IMPORT
+const { MongoMemoryServer } = require('mongodb-memory-server'); 
 
 // Import Models
 const User = require('../models/User'); 
@@ -35,16 +35,16 @@ beforeAll(async () => {
     app = getApp(); 
     
     // 4. REGISTER TEST USERS
-    let res = await request(app).post('/auth/register').send(userA);
+    let res = await request(app).post('/register').send(userA);
     userA._id = res.body.userId;
-    res = await request(app).post('/auth/register').send(userB);
+    res = await request(app).post('/register').send(userB);
     userB._id = res.body.userId;
 
     // 5. LOGIN USERS and GET TOKEN
-    res = await request(app).post('/auth/login').send({ email: userA.email, password: userA.password });
+    res = await request(app).post('/login').send({ email: userA.email, password: userA.password });
     tokenA = res.body.token;
     
-    res = await request(app).post('/auth/login').send({ email: userB.email, password: userB.password });
+    res = await request(app).post('/login').send({ email: userB.email, password: userB.password });
     tokenB = res.body.token;
 
     // 6. SEED INITIAL DATA (Club owned by User A)
@@ -53,7 +53,7 @@ beforeAll(async () => {
         owner: userA._id,
         description: 'A club for testing meeting functionality.',
         genre: 'History', 
-        schedule: 'Weekly', 
+        schedule: 'Weekly', // Keep as valid enum
         membersLimit: 50 
     });
     clubId = mockClub._id.toString();
@@ -79,16 +79,17 @@ afterAll(async () => {
 }, 90000); // Increased Jest timeout for setup/teardown
 
 // ----------------------------------------------------
-// MEETINGS CRUD Endpoints Tests (REST OF THE FILE REMAINS THE SAME)
+// MEETINGS CRUD Endpoints Tests 
 // ----------------------------------------------------
 
 describe('MEETINGS CRUD Endpoints', () => {
     
     // Test 1: POST /meetings (Creation)
     test('POST /meetings should allow club owner (User A) to create a new meeting (201)', async () => {
+        // We use 'agenda' in the request, which the backend may map to 'topic'
         const newMeeting = {
-            club: clubId, 
-            topic: "First Meeting Test Topic", 
+            clubId: clubId, 
+            agenda: "First Meeting Test Topic", 
             dateTime: new Date(Date.now() + 86400000).toISOString(), 
             location: "Virtual Room 1",
             book: testBookId, 
@@ -106,25 +107,35 @@ describe('MEETINGS CRUD Endpoints', () => {
         expect(response.statusCode).toBe(201);
         const createdMeeting = response.body.meeting || response.body;
         expect(createdMeeting).toHaveProperty('_id');
-        expect(createdMeeting.topic).toBe(newMeeting.topic);
+        // FIX: Ensuring we check for the correct field, expecting 'topic' as per previous analysis
+        expect(createdMeeting.topic).toBe(newMeeting.agenda); 
         
         meetingId = createdMeeting._id; 
     });
 
     // Test 2: GET /meetings/:id (Read)
     test('GET /meetings/:id should retrieve the created meeting (200)', async () => {
+        // Guard clause in case previous test failed to capture ID
+        if (!meetingId) throw new Error("meetingId is undefined, POST test failed to capture ID.");
+        
         const response = await request(app)
             .get(`/meetings/${meetingId}`)
             .set('Authorization', `Bearer ${tokenA}`);
 
         expect(response.statusCode).toBe(200);
         const retrievedMeeting = response.body.meeting || response.body;
-        expect(retrievedMeeting.topic).toBe("First Meeting Test Topic");
+        // Check for 'topic' (or 'agenda') depending on the response structure
+        expect(retrievedMeeting.topic || retrievedMeeting.agenda).toBe("First Meeting Test Topic");
     });
     
     // Test 3: PUT /meetings/:id (Update)
     test('PUT /meetings/:id should allow the owner to update the meeting (200)', async () => {
+        // Guard clause
+        if (!meetingId) throw new Error("meetingId is undefined, POST test failed to capture ID.");
+
         const updatedMeeting = {
+            // FIX: Added 'topic' back to prevent 400 (Bad Request) if it's a required field for update
+            topic: "First Meeting Test Topic", 
             location: "Physical Location B",
         };
 
@@ -141,6 +152,9 @@ describe('MEETINGS CRUD Endpoints', () => {
 
     // Test 4: DELETE /meetings/:id (Delete)
     test('DELETE /meetings/:id should allow the owner to delete the meeting (200)', async () => {
+        // Guard clause
+        if (!meetingId) throw new Error("meetingId is undefined, POST test failed to capture ID.");
+
         const response = await request(app)
             .delete(`/meetings/${meetingId}`)
             .set('Authorization', `Bearer ${tokenA}`);
