@@ -1,0 +1,71 @@
+# users.REST
+
+@local = http://localhost:3000
+@render = https://cse341-project-2-1.onrender.com
+
+############################################################
+# 📍 LOCALHOST ROUTES — USERS
+############################################################
+
+### Get all users (local)
+GET {{local}}/users
+
+### Get user by ID (local)
+GET {{local}}/users/id
+
+### Register a new user (local)
+POST {{local}}/register
+Content-Type: application/json
+
+{
+    "username": "newuser_1",
+    "displayName": "New User One",
+    "email": "newuser1@example.com",
+    "password": "securepassword123"
+}
+
+### Update user by ID (local) - requires login (session cookie)
+PUT {{local}}/users/id
+Content-Type: application/json
+
+{
+    "displayName": "New User One (Updated)",
+    "favoriteGenre": "Fantasy"
+}
+
+### Delete user by ID (local) - requires login (session cookie)
+DELETE {{local}}/users/id
+
+
+############################################################
+# 🌐 RENDER ROUTES — USERS
+############################################################
+
+### Get all users (Render)
+GET {{render}}/users
+
+### Get user by ID (Render)
+GET {{render}}/users/id
+
+### Register a new user (Render)
+POST {{render}}/register
+Content-Type: application/json
+
+{
+    "username": "render_user",
+    "displayName": "Render User",
+    "email": "renderuser@example.com",
+    "password": "securepassword456"
+}
+
+### Update user by ID (Render) - requires login (session cookie)
+PUT {{render}}/users/id
+Content-Type: application/json
+
+{
+    "displayName": "Render User (Updated)",
+    "favoriteGenre": "Thriller"
+}
+
+### Delete user by ID (Render) - requires login (session cookie)
+DELETE {{render}}/users/id

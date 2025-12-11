@@ -1,0 +1,54 @@
+# readingProgress.REST
+
+@local = http://localhost:3000
+@render = https://cse341-project-2-1.onrender.com
+@clubId = <CLUB_ID_FOR_PROGRESS>
+@bookId = <BOOK_ID_FOR_PROGRESS>
+@progressId = <PROGRESS_RECORD_ID>
+
+############################################################
+# 📍 LOCALHOST ROUTES — READING PROGRESS
+############################################################
+
+### Get progress record by composite keys (local)
+GET {{local}}/progress/user/id/book/{{bookId}}/club/{{clubId}}
+
+### Get all progress records for a club (local)
+GET {{local}}/progress/club/{{clubId}}
+
+### Upsert (Create or Update) progress (local) - requires login (session cookie)
+# NOTE: This endpoint will create a new record if not found, or update the existing one.
+POST {{local}}/progress
+Content-Type: application/json
+
+{
+    "book": "{{bookId}}",
+    "club": "{{clubId}}",
+    "percentage": 65,
+    "currentPage": 280,
+    "notes": "Starting to connect the dots in the mystery section."
+}
+
+### Delete a progress record by ID (local) - requires login (session cookie)
+# NOTE: Only the owner can delete their progress record.
+DELETE {{local}}/progress/{{progressId}}
+
+
+############################################################
+# 🌐 RENDER ROUTES — READING PROGRESS
+############################################################
+
+### Get all progress records for a club (Render)
+GET {{render}}/progress/club/{{clubId}}
+
+### Upsert (Create or Update) progress (Render) - requires login (session cookie)
+POST {{render}}/progress
+Content-Type: application/json
+
+{
+    "book": "{{bookId}}",
+    "club": "{{clubId}}",
+    "percentage": 90,
+    "currentPage": 350,
+    "notes": "Almost done! Great book."
+}

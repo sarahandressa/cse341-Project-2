@@ -6,202 +6,34 @@ const { isAuthenticated } = require('../middleware/authenticate');
 
 /* ------------------------ VALIDATION ------------------------ */
 const checkValidation = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  next();
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+    next();
 };
 
 const bookValidators = [
-  body('title').trim().notEmpty().withMessage('title is required'),
-  body('author').trim().notEmpty().withMessage('author is required'),
-  body('pages').optional().isInt({ min: 1 }).withMessage('pages must be >= 1'),
-  checkValidation,
+    body('title').notEmpty().withMessage('Title is required.'),
+    body('author').notEmpty().withMessage('Author is required.'),
+    body('publishedMonth').isIn(["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]).withMessage('Invalid month.'),
+    body('publishedYear').isInt({ min: 1500, max: 2100 }).withMessage('Invalid year.'),
+    checkValidation,
 ];
 
-/* ------------------------ SWAGGER / OPENAPI ------------------------ */
+// --- API Endpoints (Documentation now handled by swagger/paths.yaml) ---
 
-/**
- * @openapi
- * components:
- *   schemas:
- *     Book:
- *       type: object
- *       required:
- *         - title
- *         - author
- *       properties:
- *         _id:
- *           type: string
- *         title:
- *           type: string
- *         author:
- *           type: string
- *         pages:
- *           type: integer
- *         summary:
- *           type: string
- *         publisher:
- *           type: string
- *         genre:
- *           type: string
- *         language:
- *           type: string
- *         publishedMonth:
- *           type: string
- *         publishedYear:
- *           type: string
- */
-
-/**
- * @openapi
- * tags:
- *   - name: "Books"
- *     description: "Book management"
- */
-
-/**
- * @openapi
- * /books:
- *   get:
- *     summary: Get all books
- *     tags:
- *       - "Books"
- *     responses:
- *       '200':
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Book'
- */
+// GET ALL BOOKS (READ)
 router.get('/', booksController.getAllBooks);
 
-/**
- * @openapi
- * /books/{id}:
- *   get:
- *     summary: Get book by id
- *     tags:
- *       - "Books"
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: MongoDB ObjectId
- *     responses:
- *       '200':
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Book'
- *       '400':
- *         description: Invalid ID
- *       '404':
- *         description: Not Found
- */
-router.get('/:id', param('id').isMongoId().withMessage('Invalid ID'), checkValidation, booksController.getBookById);
+// GET SINGLE BOOK (READ)
+router.get('/:id', param('id').isMongoId().withMessage('Invalid Book ID'), checkValidation, booksController.getBookById);
 
-/**
- * @openapi
- * /books:
- *   post:
- *     summary: Create a new book (requires login)
- *     tags:
- *       - "Books"
- *     security:
- *       - sessionAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Book'
- *     responses:
- *       '201':
- *         description: Book created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Book'
- *       '400':
- *         description: Validation error
- *       '401':
- *         description: Unauthorized
- */
-router.post('/', isAuthenticated, bookValidators, async (req, res, next) => {
-  try {
-    const newBook = await booksController.createBook(req, res);
-    res.status(201).json({ message: 'Book created successfully!', book: newBook });
-  } catch (err) {
-    next(err);
-  }
-});
+// POST BOOK (CREATE) - PROTECTED
+router.post('/', isAuthenticated, bookValidators, booksController.createBook);
 
-/**
- * @openapi
- * /books/{id}:
- *   put:
- *     summary: Update a book by id (requires login)
- *     tags:
- *       - "Books"
- *     security:
- *       - sessionAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: MongoDB ObjectId
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Book'
- *     responses:
- *       '200':
- *         description: Book updated successfully
- *       '400':
- *         description: Validation error
- *       '401':
- *         description: Unauthorized
- *       '404':
- *         description: Not Found
- */
-router.put('/:id', isAuthenticated, param('id').isMongoId().withMessage('Invalid ID'), bookValidators, booksController.updateBook);
+// PUT BOOK (UPDATE) - PROTECTED
+router.put('/:id', isAuthenticated, param('id').isMongoId().withMessage('Invalid Book ID'), bookValidators, booksController.updateBook);
 
-/**
- * @openapi
- * /books/{id}:
- *   delete:
- *     summary: Delete a book by id (requires login)
- *     tags:
- *       - "Books"
- *     security:
- *       - sessionAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: MongoDB ObjectId
- *     responses:
- *       '200':
- *         description: Book deleted successfully
- *       '400':
- *         description: Validation error
- *       '401':
- *         description: Unauthorized
- *       '404':
- *         description: Not Found
- */
-router.delete('/:id', isAuthenticated, param('id').isMongoId().withMessage('Invalid ID'), checkValidation, booksController.deleteBook);
+// DELETE BOOK (DELETE) - PROTECTED
+router.delete('/:id', isAuthenticated, param('id').isMongoId().withMessage('Invalid Book ID'), checkValidation, booksController.deleteBook);
 
 module.exports = router;

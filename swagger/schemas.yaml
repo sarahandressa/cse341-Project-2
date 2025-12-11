@@ -1,0 +1,227 @@
+# swagger/schemas.yaml - ESTRUTURA CORRETA (Sem o nó 'schemas:' no topo)
+
+User:
+  type: object
+  properties:
+    _id:
+      type: string
+      description: MongoDB unique identifier.
+      example: 60c72b2f9f1b4a0015c71d9a
+    username:
+      type: string
+      description: Unique username for login.
+      example: reader_b
+    displayName:
+      type: string
+      description: Public display name.
+      example: Mary Collaborator
+    email:
+      type: string
+      format: email
+      description: User's email address.
+      example: mary@test.com
+  
+Book:
+  type: object
+  properties:
+    _id:
+      type: string
+      description: MongoDB unique identifier.
+      example: 60c72b2f9f1b4a0015c71d9b
+    title:
+      type: string
+      description: Title of the book.
+      example: The Picture of Dorian Gray
+    author:
+      type: string
+      description: Author of the book.
+      example: Oscar Wilde
+    pages:
+      type: integer
+      description: Total number of pages.
+      example: 256
+    summary:
+      type: string
+      description: A brief summary of the book.
+      example: A classic fiction about a man who remains young while his portrait ages.
+    publisher:
+      type: string
+      description: Book publisher.
+      example: Penguin Classics
+    genre:
+      type: string
+      description: Main genre of the book.
+      example: Classic
+    language:
+      type: string
+      description: Language of the book.
+      example: English
+    publishedMonth:
+      type: string
+      description: Month the book was published.
+      enum: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+      example: July
+    publishedYear:
+      type: integer
+      description: Year the book was published.
+      example: 1890
+
+Club:
+  type: object
+  properties:
+    _id:
+      type: string
+      description: MongoDB unique identifier.
+      example: 6933d5ed3fafb2690c01c41f
+    name:
+      type: string
+      description: Name of the reading club.
+      example: Midnight Club
+    description:
+      type: string
+      description: Detailed description of the club.
+      example: Monthly readings with a focus on thriller and horror.
+    genre:
+      type: string
+      description: Primary genre focus.
+      example: Horror
+    privacy:
+      type: string
+      enum: [public, private]
+      description: Visibility and joining rules.
+      example: public
+    admin:
+      type: string
+      description: ID of the user who created the club.
+    members:
+      type: array
+      items:
+        type: string
+      description: List of user IDs that are members.
+    createdAt:
+      type: string
+      format: date-time
+      description: Date the club was created.
+      example: 2025-01-15T00:00:00.000Z
+    schedule:
+      type: string
+      description: Reading schedule frequency.
+      example: Monthly
+    membersLimit:
+      type: integer
+      description: Maximum number of members allowed.
+      example: 20
+    isActive:
+      type: boolean
+      description: Indicates if the club is currently active.
+      example: true
+
+Meeting:
+  type: object
+  properties:
+    _id:
+      type: string
+      description: MongoDB unique identifier.
+      example: 693a47d2383372af5b2ad54c
+    club:
+      type: string
+      description: ID of the club the meeting belongs to.
+      example: 6933d5ed3fafb2690c01c41f
+    agenda:
+      type: string
+      description: Topic or agenda of the meeting.
+      example: Chapter 1-5 Spoiler-Free Discussion
+    organizer:
+      type: string
+      description: ID of the user organizing the meeting.
+      example: 693a4603383372af5b2ad548
+    dateTime:
+      type: string
+      format: date-time
+      description: Scheduled date and time of the meeting (ISO 8601).
+      example: 2026-03-20T20:00:00.000Z
+    location:
+      type: string
+      description: Physical location or link for the virtual meeting.
+      example: "Google Meet Link: meet.google.com/abc-defg-hij" 
+    status:
+      type: string
+      enum: [Scheduled, In Progress, Completed, Cancelled]
+      description: Current status of the meeting.
+      example: Scheduled
+    attendees:
+      type: array
+      items:
+        type: string
+      description: List of user IDs who plan to attend.
+
+Post:
+  type: object
+  properties:
+    _id:
+      type: string
+      description: MongoDB unique identifier.
+      example: 693a4abb383372af5b2ad550
+    club:
+      type: string
+      description: ID of the club the post belongs to.
+      example: 6933d5ed3fafb2690c01c41f
+    author:
+      type: string
+      description: ID of the user who authored the post.
+      example: 693a465c383372af5b2ad549
+    title:
+      type: string
+      description: Title of the forum post.
+      example: Hidden Motive in the Subtext
+    content:
+      type: string
+      description: Body content of the post or comment.
+      example: "I think the motive is hidden in the subtext of the last chapter. It's subtle, but it relates to their past isolation." 
+    parentPost:
+      type: string
+      nullable: true
+      description: ID of the parent post if this is a comment/reply.
+      example: 693a4abb383372af5b2ad54f
+    createdAt:
+      type: string
+      format: date-time
+      description: Timestamp of post creation.
+    updatedAt:
+      type: string
+      format: date-time
+      description: Timestamp of the last update.
+
+ReadingProgress:
+  type: object
+  properties:
+    _id:
+      type: string
+      description: MongoDB unique identifier.
+    user:
+      type: string
+      description: ID of the user tracking progress.
+    book:
+      type: string
+      description: ID of the book being read.
+    club:
+      type: string
+      description: ID of the club where this progress is tracked.
+    percentage:
+      type: number
+      format: float
+      description: Reading completion percentage (0.0 to 100.0).
+      example: 75.5
+    currentPage:
+      type: integer
+      description: Last page number read.
+      example: 192
+    status:
+      type: string
+      enum: [Planning, Reading, Finished]
+      description: Current reading status.
+      example: Reading
+    lastUpdated:
+      type: string
+      format: date-time
+      description: Timestamp of the last progress update.

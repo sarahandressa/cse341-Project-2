@@ -9,7 +9,7 @@
     "lint": "echo \"no lint configured\"",
     "format": "echo \"no formatter configured\"",
     "build": "echo \"no build step\"",
-    "test": "echo \"no tests yet\""
+    "test": "cross-env NODE_ENV=test jest"
   },
   "repository": {
     "type": "git",
@@ -24,23 +24,30 @@
   "homepage": "https://github.com/sarahandressa/cse341-Project-2#readme",
   "description": "",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "express-validator": "^7.3.1",
+    "js-yaml": "^4.1.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.0",
     "morgan": "^1.10.1",
     "passport": "^0.7.0",
     "passport-github2": "^0.1.12",
     "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
+    "jest": "^30.2.0",
+    "mongodb-memory-server": "^10.4.1",
     "nodemon": "^3.1.11",
+    "supertest": "^7.1.4",
     "swagger-autogen": "^2.23.7"
   }
 }

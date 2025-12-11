@@ -1,0 +1,37 @@
+# auth.REST
+
+@local = http://localhost:3000
+@render = https://cse341-project-2-1.onrender.com
+
+############################################################
+# 🔑 AUTH ROUTES (Login/Logout)
+############################################################
+
+### LOGIN (Local)
+# NOTE: This creates the session cookie required for protected routes.
+POST {{local}}/login
+Content-Type: application/json
+
+{
+    "email": "alex@test.com",
+    "password": "hashedpassword1"
+}
+
+### LOGOUT (Local)
+# NOTE: Clears the session cookie.
+POST {{local}}/logout
+
+### Check Auth Status (Local)
+GET {{local}}/profile
+
+### LOGIN (Render)
+POST {{render}}/login
+Content-Type: application/json
+
+{
+    "email": "alex@test.com",
+    "password": "hashedpassword1"
+}
+
+### LOGOUT (Render)
+POST {{render}}/logout

@@ -1,0 +1,67 @@
+# meetings.REST
+
+@local = http://localhost:3000
+@render = https://cse341-project-2-1.onrender.com
+@clubId = <CLUB_ID_FOR_MEETINGS>
+@meetingId = <MEETING_ID_TO_MANAGE>
+
+############################################################
+# 📍 LOCALHOST ROUTES — MEETINGS
+############################################################
+
+### Get all meetings by Club ID (local)
+GET {{local}}/meetings/club/{{clubId}}
+
+### Get a single meeting by ID (local)
+GET {{local}}/meetings/{{meetingId}}
+
+### Schedule a new meeting (local) - requires login (session cookie)
+POST {{local}}/meetings
+Content-Type: application/json
+
+{
+    "club": "{{clubId}}",
+    "topic": "Discussion on Chapters 5-8",
+    "dateTime": "2026-06-20T19:00:00Z",
+    "location": "Discord Voice Chat #general",
+    "status": "Scheduled"
+}
+
+### Update a meeting by ID (local) - requires login (session cookie)
+# NOTE: Only the organizer can update the meeting.
+PUT {{local}}/meetings/{{meetingId}}
+Content-Type: application/json
+
+{
+    "topic": "Discussion on Chapters 5-8 (UPDATED LOCATION)",
+    "location": "Zoom Meeting 999 888 777"
+}
+
+### Register attendance for a meeting (local) - requires login (session cookie)
+POST {{local}}/meetings/{{meetingId}}/attend
+
+### Cancel attendance for a meeting (local) - requires login (session cookie)
+DELETE {{local}}/meetings/{{meetingId}}/attend
+
+### Delete a meeting by ID (local) - requires login (session cookie)
+# NOTE: Only the organizer can delete the meeting.
+DELETE {{local}}/meetings/{{meetingId}}
+
+
+############################################################
+# 🌐 RENDER ROUTES — MEETINGS
+############################################################
+
+### Get all meetings by Club ID (Render)
+GET {{render}}/meetings/club/{{clubId}}
+
+### Schedule a new meeting (Render) - requires login (session cookie)
+POST {{render}}/meetings
+Content-Type: application/json
+
+{
+    "club": "{{clubId}}",
+    "topic": "Wrap-up and Next Book Vote",
+    "dateTime": "2026-07-05T15:00:00Z",
+    "location": "Google Meet Link"
+}

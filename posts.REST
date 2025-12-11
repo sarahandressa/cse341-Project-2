@@ -1,0 +1,76 @@
+# posts.REST
+
+@local = http://localhost:3000
+@render = https://cse341-project-2-1.onrender.com
+@clubId = <CLUB_ID_FOR_POSTS>
+@postId = <POST_ID_TO_MANAGE>
+@parentPostId = <PARENT_POST_ID_FOR_REPLY>
+
+############################################################
+# 📍 LOCALHOST ROUTES — POSTS (Forum/Discussion)
+############################################################
+
+### Get all posts for a specific Club ID (local)
+GET {{local}}/posts/club/{{clubId}}
+
+### Get a single post by ID (local)
+GET {{local}}/posts/{{postId}}
+
+### Create a new discussion post (local) - requires login (session cookie)
+POST {{local}}/posts
+Content-Type: application/json
+
+{
+    "club": "{{clubId}}",
+    "content": "I finished the book! What were everyone's thoughts on the ending?",
+    "parentPost": null
+}
+
+### Create a reply/comment to an existing post (local) - requires login (session cookie)
+POST {{local}}/posts
+Content-Type: application/json
+
+{
+    "club": "{{clubId}}",
+    "content": "I agree! I felt the author rushed the final confrontation.",
+    "parentPost": "{{parentPostId}}"
+}
+
+### Update a post by ID (local) - requires login (session cookie)
+# NOTE: Only the author can update the post.
+PUT {{local}}/posts/{{postId}}
+Content-Type: application/json
+
+{
+    "content": "I finished the book! What were everyone's thoughts on the ending? (Updated: No spoilers please!)"
+}
+
+### Delete a post by ID (local) - requires login (session cookie)
+# NOTE: Only the author can delete the post.
+DELETE {{local}}/posts/{{postId}}
+
+
+############################################################
+# 🌐 RENDER ROUTES — POSTS
+############################################################
+
+### Get all posts for a specific Club ID (Render)
+GET {{render}}/posts/club/{{clubId}}
+
+### Create a new discussion post (Render) - requires login (session cookie)
+POST {{render}}/posts
+Content-Type: application/json
+
+{
+    "club": "{{clubId}}",
+    "content": "Quick question: Does anyone know when the next meeting is scheduled?",
+    "parentPost": null
+}
+
+### Update a post by ID (Render) - requires login (session cookie)
+PUT {{render}}/posts/{{postId}}
+Content-Type: application/json
+
+{
+    "content": "Quick question: Does anyone know when the next meeting is scheduled? (Answered, thanks!)"
+}
