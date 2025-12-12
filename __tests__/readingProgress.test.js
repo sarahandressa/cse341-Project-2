@@ -67,7 +67,7 @@ beforeAll(async () => {
         currentPage: 150,
         notes: "Almost finished."
     };
-}, 150000); 
+}, 15000); 
 
 // Teardown
 afterAll(async () => {
