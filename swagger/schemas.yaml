@@ -90,14 +90,6 @@ Club:
       enum: [public, private]
       description: Visibility and joining rules.
       example: public
-    admin:
-      type: string
-      description: ID of the user who created the club.
-    members:
-      type: array
-      items:
-        type: string
-      description: List of user IDs that are members.
     createdAt:
       type: string
       format: date-time
@@ -106,7 +98,7 @@ Club:
     schedule:
       type: string
       description: Reading schedule frequency.
-      example: Monthly
+      example: [Weekly, Biweekly, Monthly]
     membersLimit:
       type: integer
       description: Maximum number of members allowed.
@@ -201,10 +193,10 @@ ReadingProgress:
     user:
       type: string
       description: ID of the user tracking progress.
-    book:
+    bookId:
       type: string
       description: ID of the book being read.
-    club:
+    clubId:
       type: string
       description: ID of the club where this progress is tracked.
     percentage:

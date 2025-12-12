@@ -1,3 +1,5 @@
+
+
 const jwt = require('jsonwebtoken');
 
 const isAuthenticated = (req, res, next) => {
@@ -13,9 +15,8 @@ const isAuthenticated = (req, res, next) => {
         token = req.cookies.jwt; 
     }
     
-    // IMPORTANT: Check if the token is null/undefined OR if it's the string 'undefined' 
-    // (which happens when you use `Bearer ${undefined_token}` in tests)
-    if (!token || token === 'undefined') {
+    
+    if (!token || token === 'undefined' || (typeof token === 'string' && token.toLowerCase() === 'undefined')) {
         console.error('Access Denied: No JWT token found in header or cookies.');
         return res.status(401).json({ 
             error: 'Unauthorized', 

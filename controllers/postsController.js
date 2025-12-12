@@ -1,4 +1,7 @@
+// postsController.js
+
 const Post = require('../models/Post');
+const mongoose = require('mongoose'); 
 
 // ----------------------------------
 // READ Operations (GET)
@@ -18,6 +21,10 @@ exports.getPostsByClubId = async (req, res) => {
 
         res.json(posts);
     } catch (error) {
+        
+        if (error.name === 'CastError') {
+            return res.status(400).json({ error: 'Bad Request', message: 'Invalid Club ID format.' });
+        }
         res.status(500).json({ error: 'Server error: Could not retrieve posts.' });
     }
 };
@@ -33,6 +40,10 @@ exports.getPostById = async (req, res) => {
         if (!post) return res.status(404).json({ error: 'Post not found' });
         res.json(post);
     } catch (error) {
+       
+        if (error.name === 'CastError') {
+            return res.status(400).json({ error: 'Bad Request', message: 'Invalid Post ID format.' });
+        }
         res.status(500).json({ error: 'Server error: Could not retrieve post.' });
     }
 };
@@ -46,27 +57,26 @@ exports.getPostById = async (req, res) => {
  */
 exports.createPost = async (req, res) => {
     try {
-        // 💡 CORREÇÃO 1: Incluir 'title' na desestruturação do req.body
         const { club, content, parentPost, title } = req.body; 
         
-        // O author ID vem do JWT payload após a autenticação
         const newPost = new Post({
             club,
             author: req.user.id, 
             content,
-            // 💡 CORREÇÃO 2: Incluir o campo 'title' no objeto Post
             title, 
             parentPost: parentPost || null
         });
 
         await newPost.save();
         
-        // Garante que a resposta contenha o post criado
         res.status(201).json({ message: 'Post created successfully!', post: newPost });
     } catch (error) {
-        // Exibe o erro de validação para debugging no console
-        console.error("Post Creation Error (400):", error.message);
-        res.status(400).json({ error: 'Failed to create post: ' + error.message });
+       
+        if (error.name === 'ValidationError') {
+            console.error("Post Creation Error (400):", error.message);
+            return res.status(400).json({ error: 'Failed to create post: ' + error.message });
+        }
+        res.status(500).json({ error: 'Server error: Could not create post.' });
     }
 };
 
@@ -76,19 +86,17 @@ exports.createPost = async (req, res) => {
 
 /**
  * Updates an existing post by its ID. (PUT /posts/:id) - Requires Authentication
- * Note: Only the author should be allowed to update. This check should be in the route/middleware for better security.
  */
 exports.updatePost = async (req, res) => {
     try {
-        // 💡 Ajuste para permitir a atualização de 'title' e 'content'
         const { content, title } = req.body;
         
         const updatedPost = await Post.findOneAndUpdate(
             // Find post by ID AND ensure the current user is the author
             { _id: req.params.id, author: req.user.id }, 
-            // Atualiza content e title
+            
             { content, title }, 
-            { new: true, runValidators: true }
+            { new: true, runValidators: true } 
         );
         
         if (!updatedPost) {
@@ -100,7 +108,11 @@ exports.updatePost = async (req, res) => {
         
         res.json({ message: 'Post updated successfully', post: updatedPost });
     } catch (error) {
-        res.status(400).json({ error: 'Failed to update post: ' + error.message });
+       
+        if (error.name === 'ValidationError' || error.name === 'CastError') {
+            return res.status(400).json({ error: 'Failed to update post: ' + error.message });
+        }
+        res.status(500).json({ error: 'Server error: Could not update post.' });
     }
 };
 
@@ -110,7 +122,6 @@ exports.updatePost = async (req, res) => {
 
 /**
  * Deletes a post by its ID. (DELETE /posts/:id) - Requires Authentication
- * Note: Only the author or a club admin should be allowed to delete.
  */
 exports.deletePost = async (req, res) => {
     try {
@@ -125,6 +136,10 @@ exports.deletePost = async (req, res) => {
         
         res.status(200).json({ message: 'Post deleted successfully' });
     } catch (error) {
+         
+        if (error.name === 'CastError') {
+            return res.status(400).json({ error: 'Bad Request', message: 'Invalid Post ID format.' });
+        }
         res.status(500).json({ error: 'Server error: Could not delete post.' });
     }
 };

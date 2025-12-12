@@ -34,7 +34,7 @@ Content-Type: application/json
   "description": "Focused on contemporary classics and award-winning books.",
   "genre": "Literary Fiction",
   "createdAt": "2024-09-10",
-  "schedule": "Bi-weekly",
+  "schedule": "Biweekly",
   "membersLimit": 30,
   "isActive": true
 }

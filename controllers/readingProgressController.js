@@ -1,3 +1,5 @@
+// controllers/readingProgressController.js
+
 const ReadingProgress = require('../models/ReadingProgress');
 const mongoose = require('mongoose');
 
@@ -12,8 +14,7 @@ exports.getProgressByKeys = async (req, res) => {
     try {
         const { userId, bookId, clubId } = req.params;
 
-        // Note: The URL parameters are already named correctly for Mongoose fields (user, book, club)
-        // because the controller receives them via req.params
+        
         const progress = await ReadingProgress.findOne({
             user: userId,
             book: bookId,
@@ -29,7 +30,8 @@ exports.getProgressByKeys = async (req, res) => {
 
         res.status(200).json(progress);
     } catch (error) {
-        if (error.kind === 'ObjectId') {
+        
+        if (error.name === 'CastError') {
             return res.status(400).json({ error: 'Bad Request', message: 'Invalid ID format in URL.' });
         }
         res.status(500).json({ error: 'Server Error', message: 'Could not retrieve reading progress.' });
@@ -41,24 +43,38 @@ exports.getProgressByKeys = async (req, res) => {
  */
 exports.getProgressById = async (req, res) => {
     try {
+        
+        // --- CRITICAL FIX: Prevent 500 TypeError if authentication middleware fails ---
+        if (!req.user || !req.user.id) {
+            console.error("Error in getProgressById: req.user is undefined or missing ID.");
+            return res.status(403).json({ error: 'Authorization Error', message: 'User ID not found in token payload.' });
+        }
+        const authenticatedUserId = req.user.id;
+        // --------------------------------------------------------------------------
+
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: 'Bad Request', message: 'Invalid ID format.' });
+        }
+
+        // Find the progress entry
         const progress = await ReadingProgress.findById(req.params.id)
             .populate('user', 'username displayName')
             .populate('book', 'title author');
         
         if (!progress) return res.status(404).json({ error: 'Not Found', message: 'Reading Progress entry not found' });
         
-        // Authorization check: Ensure the user is the owner (Restored best practice)
-        if (progress.user._id.toString() !== req.user.id) {
+        // Authorization check: Ensure the user is the owner
+        if (progress.user._id.toString() !== authenticatedUserId) {
             return res.status(403).json({ error: 'Forbidden', message: 'Access denied. You can only view your own progress.' });
         }
         
-
         res.status(200).json(progress);
     } catch (error) {
-        if (error.kind === 'ObjectId') {
+        if (error.name === 'CastError') {
             return res.status(400).json({ error: 'Bad Request', message: 'Invalid ID format.' });
         }
-        console.error("Error in getProgressById:", error);
+        // Note: The original error (TypeError) is now handled by the critical fix above.
+        console.error("Error in getProgressById:", error); 
         res.status(500).json({ error: 'Server Error', message: 'Could not retrieve reading progress entry.' });
     }
 };
@@ -79,7 +95,8 @@ exports.getAllProgressByClub = async (req, res) => {
 
         res.status(200).json(progressList);
     } catch (error) {
-        if (error.kind === 'ObjectId') {
+        
+        if (error.name === 'CastError') {
             return res.status(400).json({ error: 'Bad Request', message: 'Invalid Club ID format.' });
         }
         res.status(500).json({ error: 'Server Error', message: 'Could not retrieve club progress list.' });
@@ -99,8 +116,8 @@ exports.createOrUpdateProgress = async (req, res) => {
     try {
         // --- DATA MAPPING: Renames fields to match Mongoose Schema ---
         const { 
-            clubId: club,     // clubId from request body maps to 'club' for Mongoose
-            bookId: book,     // bookId from request body maps to 'book' for Mongoose
+            clubId: club,      // clubId from request body maps to 'club' for Mongoose
+            bookId: book,      // bookId from request body maps to 'book' for Mongoose
             percentage, 
             currentPage, 
             notes 
@@ -141,7 +158,7 @@ exports.createOrUpdateProgress = async (req, res) => {
         res.status(statusCode).json(progress); 
 
     } catch (error) {
-        if (error.name === 'ValidationError' || error.kind === 'ObjectId') {
+        if (error.name === 'ValidationError' || error.name === 'CastError') {
             return res.status(400).json({ error: 'Validation Failed', message: 'Failed to record progress: ' + error.message });
         }
         res.status(500).json({ error: 'Server Error', message: 'Could not record progress.' });
@@ -174,8 +191,8 @@ exports.deleteProgress = async (req, res) => {
         
         res.status(200).json({ message: 'Reading progress deleted successfully' });
     } catch (error) {
-           if (error.kind === 'ObjectId') {
-             return res.status(400).json({ error: 'Bad Request', message: 'Invalid ID format.' });
+           if (error.name === 'CastError') {
+               return res.status(400).json({ error: 'Bad Request', message: 'Invalid ID format.' });
            }
         res.status(500).json({ error: 'Server Error', message: 'Could not delete progress.' });
     }

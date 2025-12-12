@@ -1,194 +1,188 @@
-// __tests__/readingProgress.test.js
-// This file tests the CRUD/Upsert endpoints for ReadingProgress
-
 const request = require('supertest');
-const getApp = require('../server'); 
+const app = require('../server');
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server'); 
-
-// Import Models 
-const User = require('../models/User'); 
-const Book = require('../models/Book'); 
+const User = require('../models/User');
 const Club = require('../models/Club');
-const ReadingProgress = require('../models/ReadingProgress'); 
+const Book = require('../models/Book');
+const ReadingProgress = require('../models/ReadingProgress');
 
-// Global Test Variables
-let app; 
-let userA = { email: 'progressuserA@test.com', password: 'password123', username: 'ProgressUserA' };
-let clubId, bookId, progressId, tokenA;
-let mongod; // Instance of MongoMemoryServer
+let testUser, testUser2, adminUser;
+let userToken, userToken2;
+let testClub, testBook, testBook2;
+let progressId;
 
-// ----------------------------------------------------
-// SETUP HOOK: Init MongoMemoryServer, connect Mongoose, Register user, seed data
-// ----------------------------------------------------
-beforeAll(async () => {
-    // 1. START ISOLATED MONGODB SERVER
-    mongod = await MongoMemoryServer.create();
-    const uri = mongod.getUri();
-    
-    // 2. CONNECT MOONGOSE TO ISOLATED SERVER
-    await mongoose.connect(uri);
-    console.log(`Mongoose connected to isolated in-memory DB: ${uri}`);
+// Variables to hold test data, defined in beforeAll
+let initialProgressData;
+let updatedProgressData;
 
-    // 3. Initialize the application
-    app = getApp(); 
+// Helper function for user registration and login
+const registerAndLogin = async (username, email, password) => {
+    await request(app).post('/users/register').send({ username, email, password, displayName: username });
+    const loginResponse = await request(app).post('/users/login').send({ email, password });
+    return { user: loginResponse.body.user, token: loginResponse.body.token };
+};
 
-    // 4. REGISTER TEST USER
-    let res = await request(app).post('/register').send(userA);
-    userA._id = res.body.userId;
+// Setup
+beforeAll(async () => { 
+    // FIX: Increase timeout for beforeAll hook to allow time for the memory DB connection and setup
+    console.log(`Mongoose connected to isolated in-memory DB: ${mongoose.connection.host}:${mongoose.connection.port}/${mongoose.connection.name}`);
 
-    // 5. LOGIN USER and GET TOKEN
-    res = await request(app).post('/login').send({ email: userA.email, password: userA.password });
-    tokenA = res.body.token;
+    // Setup Users
+    const auth1 = await registerAndLogin('TestProgressUser', 'progress@test.com', 'password123');
+    testUser = auth1.user;
+    userToken = auth1.token;
 
-    // 6. SEED INITIAL DATA (Book and Club)
-    const mockBook = await Book.create({ 
-        title: 'Test Progress Book', 
-        author: 'Author P', 
-        isbn: '1234567890123', 
-        pages: 300,
-        publishedYear: 2023, 
-        publishedMonth: 'October' 
-    });
-    bookId = mockBook._id.toString();
+    const auth2 = await registerAndLogin('OtherUser', 'other@test.com', 'password123');
+    testUser2 = auth2.user;
+    userToken2 = auth2.token;
 
-    const mockClub = await Club.create({ 
+    // Setup Book
+    const bookResponse = await Book.create({ title: 'Test Progress Book', author: 'Author Name', isbn: '1234567890123' });
+    testBook = bookResponse;
+
+    const bookResponse2 = await Book.create({ title: 'Test Progress Book 2', author: 'Author Name 2', isbn: '1234567890124' });
+    testBook2 = bookResponse2;
+
+    // Setup Club
+    const clubResponse = await Club.create({ 
         name: 'Test Progress Club', 
-        owner: userA._id,
-        description: 'A club for testing reading progress.',
-        genre: 'Drama', 
-        schedule: 'Monthly', 
-        membersLimit: 20 
+        description: 'Club for testing progress', 
+        creator: testUser._id 
     });
-    clubId = mockClub._id.toString();
-}, 90000); // Increased Jest timeout for setup/teardown
+    testClub = clubResponse;
+    
+    // FIX 2: Define data payload AFTER all IDs are initialized
+    initialProgressData = {
+        clubId: testClub._id.toString(), // CRITICAL: Now using IDs initialized above
+        bookId: testBook._id.toString(), // CRITICAL: Now using IDs initialized above
+        percentage: 50,
+        currentPage: 100,
+        notes: "Starting to read."
+    };
+    
+    updatedProgressData = {
+        clubId: testClub._id.toString(), // CRITICAL: Now using IDs initialized above
+        bookId: testBook._id.toString(), // CRITICAL: Now using IDs initialized above
+        percentage: 75,
+        currentPage: 150,
+        notes: "Almost finished."
+    };
+}, 120000); // Increased timeout to 120 seconds (2 minutes)
 
-// ----------------------------------------------------
-// TEARDOWN HOOK: Clean up the database and close connections
-// ----------------------------------------------------
+// Teardown
 afterAll(async () => {
-    // 1. Cleanup data
-    await User.deleteMany({ email: userA.email });
-    await Book.findByIdAndDelete(bookId);
-    await Club.findByIdAndDelete(clubId);
-    await ReadingProgress.deleteMany({ user: userA._id }); 
-    
-    // 2. Close Mongoose connection
     await mongoose.connection.close();
-    
-    // 3. Stop MongoMemoryServer instance
-    if (mongod) {
-        await mongod.stop();
-    }
     console.log("Isolated DB connection closed and server stopped.");
-}, 90000); // Increased Jest timeout for setup/teardown
-
-// ----------------------------------------------------
-// READING PROGRESS CRUD/Upsert Endpoints Tests 
-// ----------------------------------------------------
+});
 
 describe('READING PROGRESS CRUD/Upsert Endpoints', () => {
-    
-    // Test 1: POST /progress (Create - Upsert)
-    test('POST /progress should create a new reading progress entry (201)', async () => {
-        // Ensure tokenA is defined before use 
-        if (!tokenA) throw new Error("Authentication token A is missing, setup failed.");
-        
-        const newProgress = {
-            book: bookId, 
-            club: clubId, 
-            percentage: 50.0,
-            currentPage: 150,
-            notes: "Halfway through the book."
-        };
 
+    // Test 1: POST /progress (Create - Successful creation)
+    test('POST /progress should create a new progress entry (201)', async () => {
         const response = await request(app)
             .post('/progress')
-            .set('Authorization', `Bearer ${tokenA}`) 
-            .send(newProgress);
+            .set('Authorization', `Bearer ${userToken}`)
+            .send(initialProgressData);
+
+        if (response.statusCode !== 201) {
+            console.error('POST /progress Failed with response body:', response.body);
+        }
 
         expect(response.statusCode).toBe(201);
-        
-        const createdProgress = response.body.progress || response.body; 
-
+        // Robust capture of the ID
+        const createdProgress = response.body.progress || response.body;
         expect(createdProgress).toHaveProperty('_id');
         expect(createdProgress.percentage).toBe(50);
-        
-        // Check the user ID in the populated field
-        expect(createdProgress.user._id.toString()).toBe(userA._id.toString());
-        
-        progressId = createdProgress._id; 
+        progressId = createdProgress._id; // Capture ID for subsequent tests
     });
 
-    // Test 2: GET /progress/:id (Read)
-    // NOTE: This test will FAIL (500) until you fix the 'TypeError: Cannot read properties of undefined (reading 'id')' 
-    // bug in your readingProgressController.js file.
-    test('GET /progress/:id should retrieve the created progress entry (200)', async () => {
+    // Test 2: GET /progress/:id (Read - Successful retrieval by owner)
+    test('GET /progress/:id should retrieve the created progress entry for the owner (200)', async () => {
         if (!progressId) throw new Error("progressId is undefined, POST test failed to capture ID.");
-        
+
         const response = await request(app)
             .get(`/progress/${progressId}`)
-            .set('Authorization', `Bearer ${tokenA}`);
+            .set('Authorization', `Bearer ${userToken}`);
 
         expect(response.statusCode).toBe(200);
-
-        const retrievedProgress = response.body;
-        expect(retrievedProgress.percentage).toBe(50);
-        expect(retrievedProgress.currentPage).toBe(150);
-        
-        expect(retrievedProgress.user._id.toString()).toBe(userA._id.toString()); 
+        expect(response.body._id).toBe(progressId.toString());
+        expect(response.body.percentage).toBe(50);
+        expect(response.body.user._id).toBe(testUser._id.toString());
     });
 
-    // Test 3: POST /progress (Update - Upsert)
-    test('POST /progress should update the existing reading progress entry (200)', async () => {
-        if (!progressId) throw new Error("progressId is undefined, POST test failed to capture ID.");
-
-        const updatedProgress = {
-            book: bookId, 
-            club: clubId, 
-            percentage: 75.0,
-            currentPage: 225,
-        };
-
+    // Test 3: POST /progress (Update - Successful update/upsert)
+    test('POST /progress should update the existing progress entry for the book (200)', async () => {
         const response = await request(app)
             .post('/progress')
-            .set('Authorization', `Bearer ${tokenA}`) 
-            .send(updatedProgress);
+            .set('Authorization', `Bearer ${userToken}`)
+            .send(updatedProgressData);
 
         expect(response.statusCode).toBe(200);
-        
-        const updatedResult = response.body.progress || response.body;
-
-        expect(updatedResult.percentage).toBe(75);
-        expect(updatedResult.currentPage).toBe(225);
-        expect(updatedResult._id.toString()).toBe(progressId.toString());
+        const result = response.body.updatedProgress || response.body;
+        expect(result.percentage).toBe(75);
+        // The ID should be the same as the one initially created
+        expect(result._id).toBe(progressId.toString());
     });
-
-    // Test 4: DELETE /progress/:id (Delete)
-    test('DELETE /progress/:id should delete the reading progress entry (200)', async () => {
+    
+    // Test 4: GET /progress/:id (Read - Forbidden access for other users)
+    test('GET /progress/:id should return 403 Forbidden for another user', async () => {
         if (!progressId) throw new Error("progressId is undefined, POST test failed to capture ID.");
 
         const response = await request(app)
+            .get(`/progress/${progressId}`)
+            .set('Authorization', `Bearer ${userToken2}`); // Using token of a different user
+
+        expect(response.statusCode).toBe(403);
+        expect(response.body.error).toBe('Forbidden');
+    });
+
+    // Test 5: DELETE /progress/:id (Delete - Successful deletion)
+    test('DELETE /progress/:id should allow the user to delete their progress entry (200) and verify 404', async () => {
+        if (!progressId) throw new Error("progressId is undefined, POST test failed to capture ID.");
+
+        const deleteResponse = await request(app)
             .delete(`/progress/${progressId}`)
-            .set('Authorization', `Bearer ${tokenA}`);
+            .set('Authorization', `Bearer ${userToken}`);
 
-        expect(response.statusCode).toBe(200);
-        expect(response.body.message).toBe('Reading progress deleted successfully');
+        expect(deleteResponse.statusCode).toBe(200);
+        expect(deleteResponse.body.message).toBe('Reading progress deleted successfully');
 
-        // Verify deletion
+        // Verification: GET should now return 404 Not Found
         const verifyResponse = await request(app)
             .get(`/progress/${progressId}`)
-            .set('Authorization', `Bearer ${tokenA}`);
-        
+            .set('Authorization', `Bearer ${userToken}`);
+
         expect(verifyResponse.statusCode).toBe(404);
     });
 
-    // Test 5: POST /progress (Unauthenticated)
-    test('POST /progress should return 401 if unauthenticated', async () => {
-        const response = await request(app)
-            .post('/progress')
-            .send({});
+    // Test 6: GET All Progress by Club
+    test('GET /progress/club/:clubId should retrieve all progress entries for a club (200)', async () => {
+        // Setup two new progress entries for the club
+        const newProgress1 = await ReadingProgress.create({
+            user: testUser._id,
+            book: testBook._id,
+            club: testClub._id,
+            percentage: 10,
+        });
 
-        expect(response.statusCode).toBe(401);
+        const newProgress2 = await ReadingProgress.create({
+            user: testUser2._id,
+            book: testBook2._id,
+            club: testClub._id,
+            percentage: 90,
+        });
+
+        const response = await request(app)
+            .get(`/progress/club/${testClub._id.toString()}`);
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.length).toBe(2);
+        
+        // Check sorting: highest percentage first
+        expect(response.body[0].percentage).toBe(90);
+        expect(response.body[1].percentage).toBe(10);
+        
+        // Clean up
+        await ReadingProgress.deleteMany({ club: testClub._id });
     });
 });

@@ -19,11 +19,12 @@ GET {{local}}/posts/{{postId}}
 ### Create a new discussion post (local) - requires login (session cookie)
 POST {{local}}/posts
 Content-Type: application/json
-
 {
-    "club": "{{clubId}}",
-    "content": "I finished the book! What were everyone's thoughts on the ending?",
-    "parentPost": null
+  "club": "id",
+  "author": "id",
+  "title": "Finished reading",
+  "content": "I finished the book! What were everyone's thoughts on the ending?",
+  "parentPost": null
 }
 
 ### Create a reply/comment to an existing post (local) - requires login (session cookie)
@@ -32,6 +33,7 @@ Content-Type: application/json
 
 {
     "club": "{{clubId}}",
+    "author": "id",
     "content": "I agree! I felt the author rushed the final confrontation.",
     "parentPost": "{{parentPostId}}"
 }
