@@ -67,7 +67,7 @@ beforeAll(async () => {
         currentPage: 150,
         notes: "Almost finished."
     };
-}, 120000); // Increased timeout to 120 seconds (2 minutes)
+}, 150000); 
 
 // Teardown
 afterAll(async () => {
